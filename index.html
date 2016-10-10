@@ -1,0 +1,327 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>簡單使用rvest進行網路爬取 by Lofu</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-dark.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/Lofu/R-Crawl-Notebook">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/Lofu/R-Crawl-Notebook/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/Lofu/R-Crawl-Notebook/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>簡單使用rvest進行網路爬取</h1>
+          <p>一個從沒用R寫過爬蟲的R信徒，快速入門學習筆記</p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/Lofu">Lofu</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
+        </div>
+
+        <blockquote>
+<h1>
+<a id="前言" class="anchor" href="#%E5%89%8D%E8%A8%80" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>前言</h1>
+</blockquote>
+
+<p>由於工作上的的需要，小弟近期自學使用R語言進行爬蟲，在眾多大神的神文中沈浮，所以想自行編輯一篇文章來讓各位有興趣也如同我沒有使用R爬蟲過的菜鳥能少踩點雷，有一條快速的路徑能迅速上手。然而，在使用過程中，其實小弟也遇到一些難題，本文在後面將會做一小段的小分享，關於使用rvest爬蟲的缺點。</p>
+
+<p>進行爬蟲的過程中，需要一些網頁編輯架構的基礎知識，也就是所謂的 <strong>HTML</strong>與 <strong>CSS</strong> 等編輯網頁的語言，而在本篇小弟取自其他大大的神文中小弟認為簡單明暸的說明文，希望能快速的讓大家通過這一個階段！ </p>
+
+<h2>
+<a id="本文適合對象" class="anchor" href="#%E6%9C%AC%E6%96%87%E9%81%A9%E5%90%88%E5%B0%8D%E8%B1%A1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>本文適合對象</h2>
+
+<ul>
+<li>曾經使用過R，並且熟悉<code>dplyr</code>與<code>Pipeline</code>者為佳</li>
+</ul>
+
+<h2>
+<a id="自身背景簡介" class="anchor" href="#%E8%87%AA%E8%BA%AB%E8%83%8C%E6%99%AF%E7%B0%A1%E4%BB%8B" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>自身背景簡介</h2>
+
+<ul>
+<li>身份：役男(剛從貓空統計所畢業) </li>
+<li>R年齡：約兩年左右</li>
+<li>是否具備 <strong>html</strong> 知識：NO </li>
+<li>是否具備 <strong>css</strong>  知識：NO</li>
+<li>曾經使用過的R套件：dplyr、tidyr、ggplot2、...etc</li>
+</ul>
+
+<h2>
+<a id="挑選-rvest-作為爬蟲套件的原因" class="anchor" href="#%E6%8C%91%E9%81%B8-rvest-%E4%BD%9C%E7%82%BA%E7%88%AC%E8%9F%B2%E5%A5%97%E4%BB%B6%E7%9A%84%E5%8E%9F%E5%9B%A0" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>挑選 <strong>rvest</strong> 作為爬蟲套件的原因</h2>
+
+<ul>
+<li>
+<strong>rvest</strong> 的作者與我最常使用的一些套件為同一開發者，所以有許多特性相似也相容。</li>
+<li>
+<strong>hadley</strong>的威名就不用小編多談惹ＸＤ</li>
+<li>
+<strong>rvest</strong> 支援了 <strong>Pipeline</strong> 的設計 (這要用過的同道們才懂呀QQ)</li>
+</ul>
+
+<blockquote>
+<h1>
+<a id="正片開始" class="anchor" href="#%E6%AD%A3%E7%89%87%E9%96%8B%E5%A7%8B" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>正片開始</h1>
+</blockquote>
+
+<h2>
+<a id="網頁基本架構介紹與selectorgadget的應用" class="anchor" href="#%E7%B6%B2%E9%A0%81%E5%9F%BA%E6%9C%AC%E6%9E%B6%E6%A7%8B%E4%BB%8B%E7%B4%B9%E8%88%87selectorgadget%E7%9A%84%E6%87%89%E7%94%A8" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>網頁基本架構介紹與SelectorGadget的應用</h2>
+
+<ul>
+<li>HTML就如同一間空房子</li>
+<li>CSS就像是房子的裝潢部分，材質越好，花的時間越久，當然就會越漂亮。</li>
+<li>jQuery這邊就先不提</li>
+</ul>
+
+<p>下面連結為在使用 <strong>rvest</strong> 前所需內容：</p>
+
+<h3>
+<a id="css與html基本介紹與selecttorgadget" class="anchor" href="#css%E8%88%87html%E5%9F%BA%E6%9C%AC%E4%BB%8B%E7%B4%B9%E8%88%87selecttorgadget" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><a href="https://blog.gtwang.org/r/rvest-web-scraping-with-r/">CSS與HTML基本介紹與SelecttorGadget</a>
+</h3>
+
+<p>以上連結為某位大大的神文，基本上當您看完上面連結的前兩頁，就可以準備進入爬蟲的階段，而在接下來的部分，我將給予各種範例並寫上註解來幫助各位了解爬蟲過程與Combo的過程。</p>
+
+<h3>
+<a id="套件的函數說明" class="anchor" href="#%E5%A5%97%E4%BB%B6%E7%9A%84%E5%87%BD%E6%95%B8%E8%AA%AA%E6%98%8E" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>套件的函數說明</h3>
+
+<p>在進行<strong>rvest</strong>套件的使用前，先以維基百科的某個頁面當作材料，介紹一些常用的function，經過這個說明可以減少各位在R中使用或閱讀<code>?XXXX()</code>的次數XD。</p>
+
+<pre><code>## read_html函數先將整個網頁的原始HTML程式碼抓下來
+page.source &lt;- read_html("https://en.wikipedia.org/wiki/R_(programming_language)")
+## 執行這個物件，看看他的內容，其實可以視為這個網址下的網頁內容背後的原始html
+page.source
+</code></pre>
+
+<p><img src="https://raw.githubusercontent.com/Lofu/R-Crawl-Notebook/master/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-10-04%20%E4%B8%8A%E5%8D%8811.02.17.png" alt=""></p>
+
+<pre><code>## 配合google得CSS選擇器將指定的資料取出來
+version.block &lt;- html_nodes(page.source, ".wikitable th+ td , th:nth-child(2) , .wikitable th:nth-child(1)")
+## 亦可使用xpath的方式抓取
+version.block2 &lt;- html_nodes(page.source, xpath = '//table[@class="wikitable"]//tr//th')
+head(version.block)
+</code></pre>
+
+<p><img src="https://raw.githubusercontent.com/Lofu/R-Crawl-Notebook/master/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-10-04%20%E4%B8%8B%E5%8D%889.55.01.png" alt=""></p>
+
+<pre><code>## 萃取中元素中的相關資訊
+content &lt;- html_text(version.block)
+head(content)
+</code></pre>
+
+<p><img src="https://raw.githubusercontent.com/Lofu/R-Crawl-Notebook/master/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-10-04%20%E4%B8%8B%E5%8D%8810.19.36.png" alt=""></p>
+
+<pre><code>## 萃取出所有html的元素標籤
+html_name(version.block)
+</code></pre>
+
+<p><img src="https://raw.githubusercontent.com/Lofu/R-Crawl-Notebook/master/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-10-04%20%E4%B8%8B%E5%8D%8810.26.51.png" alt=""></p>
+
+<pre><code>## 可以列出每個 HTML 元素的所有屬性
+el.attrs &lt;- html_attrs(version.block)
+## 也可以列出特定屬性
+el.attr &lt;- html_attr(version.block, "style")
+head(el.attr)
+</code></pre>
+
+<p><img src="https://raw.githubusercontent.com/Lofu/R-Crawl-Notebook/master/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-10-04%20%E4%B8%8B%E5%8D%8810.36.10.png" alt=""></p>
+
+<hr>
+
+<h2>
+<a id="範例二" class="anchor" href="#%E7%AF%84%E4%BE%8B%E4%BA%8C" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>範例二</h2>
+
+<h3>
+<a id="爬取職棒球員的統計表中球員數據表" class="anchor" href="#%E7%88%AC%E5%8F%96%E8%81%B7%E6%A3%92%E7%90%83%E5%93%A1%E7%9A%84%E7%B5%B1%E8%A8%88%E8%A1%A8%E4%B8%AD%E7%90%83%E5%93%A1%E6%95%B8%E6%93%9A%E8%A1%A8" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>爬取<a href="http://www.cpbl.com.tw/stats/all.html?&amp;year=2016&amp;stat=pbat&amp;sort=AVG&amp;order=desc">職棒球員的統計表</a>中，球員數據表</h3>
+
+<h4>
+<a id="目的爬取表中各球員的obpslgavg" class="anchor" href="#%E7%9B%AE%E7%9A%84%E7%88%AC%E5%8F%96%E8%A1%A8%E4%B8%AD%E5%90%84%E7%90%83%E5%93%A1%E7%9A%84obpslgavg" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>目的：爬取表中各球員的<strong>OBP</strong>、<strong>SLG</strong>、<strong>AVG</strong>
+</h4>
+
+<h4>
+<a id="步驟如下註解" class="anchor" href="#%E6%AD%A5%E9%A9%9F%E5%A6%82%E4%B8%8B%E8%A8%BB%E8%A7%A3" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>步驟如下註解：</h4>
+
+<div class="highlight highlight-source-r"><pre><span class="pl-c">## 要先讀入這個url的html，存入cpbl_url這個物件中</span>
+<span class="pl-v">cpbl_url</span> <span class="pl-k">=</span> read_html(<span class="pl-s"><span class="pl-pds">"</span>http://www.cpbl.com.tw/stats/all.html?&amp;year=2016&amp;stat=pbat&amp;sort=AVG&amp;order=desc<span class="pl-pds">"</span></span>)
+
+<span class="pl-c">## 將整個爬取資料存入新的物件</span>
+<span class="pl-smi">nba_url_name</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">nba_url</span> %<span class="pl-k">&gt;</span>% 
+  html_nodes(<span class="pl-v">css</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>td a<span class="pl-pds">"</span></span>) %<span class="pl-k">&gt;</span>% <span class="pl-c">##萃取出CSS選擇器的資料</span>
+  html_text() %<span class="pl-k">&gt;</span>% <span class="pl-c">## 取出資料</span>
+  <span class="pl-k">data.frame</span>(<span class="pl-v">NAME</span> <span class="pl-k">=</span> .) <span class="pl-c">## 將資料存成dataframe，並命名欄位名稱為NAME</span>
+
+<span class="pl-c">## 以下與上面意義相同</span>
+<span class="pl-smi">nba_url</span> %<span class="pl-k">&gt;</span>%
+  html_nodes(<span class="pl-v">css</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>td:nth-child(16)<span class="pl-pds">"</span></span>) %<span class="pl-k">&gt;</span>%
+  html_text() %<span class="pl-k">&gt;</span>%
+  <span class="pl-k">data.frame</span>(<span class="pl-v">OBP</span> <span class="pl-k">=</span> .) <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-smi">nba_url_OBP</span>
+
+<span class="pl-smi">nba_url</span> %<span class="pl-k">&gt;</span>%
+  html_nodes(<span class="pl-v">css</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>td:nth-child(17)<span class="pl-pds">"</span></span>) %<span class="pl-k">&gt;</span>%
+  html_text() %<span class="pl-k">&gt;</span>%
+  <span class="pl-k">data.frame</span>(<span class="pl-v">SLG</span> <span class="pl-k">=</span> .) <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-smi">nba_url_SLG</span>
+
+<span class="pl-smi">nba_url</span> %<span class="pl-k">&gt;</span>%
+  html_nodes(<span class="pl-v">css</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>td:nth-child(18)<span class="pl-pds">"</span></span>) %<span class="pl-k">&gt;</span>%
+  html_text() %<span class="pl-k">&gt;</span>%
+  <span class="pl-k">data.frame</span>(<span class="pl-v">AVG</span> <span class="pl-k">=</span> .) <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-smi">nba_url_AVG</span>
+
+ <span class="pl-c">## 最後將整理完的資料合併</span>
+
+<span class="pl-smi">nba_url_name</span> %<span class="pl-k">&gt;</span>% 
+  bind_cols(<span class="pl-smi">nba_url_OBP</span>) %<span class="pl-k">&gt;</span>% 
+  bind_cols(<span class="pl-smi">nba_url_SLG</span>) %<span class="pl-k">&gt;</span>% 
+  bind_cols(<span class="pl-smi">nba_url_AVG</span>) %<span class="pl-k">&gt;</span>% 
+  head() <span class="pl-c">## 看看前6筆資料就好</span>
+</pre></div>
+
+<p><img src="https://raw.githubusercontent.com/Lofu/R-Crawl-Notebook/master/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-10-03%20%E4%B8%8B%E5%8D%888.20.54.png" alt=""></p>
+
+<h2>
+<a id="範例三" class="anchor" href="#%E7%AF%84%E4%BE%8B%E4%B8%89" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>範例三</h2>
+
+<h3>
+<a id="爬取露天的商品資料" class="anchor" href="#%E7%88%AC%E5%8F%96%E9%9C%B2%E5%A4%A9%E7%9A%84%E5%95%86%E5%93%81%E8%B3%87%E6%96%99" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><a href="http://www.ruten.com.tw/">爬取露天的商品資料</a>
+</h3>
+
+<p>範例三所示範的內容步驟如下：</p>
+
+<ol>
+<li>自動在露天官網輸入欲查詢的商品關鍵字</li>
+<li>得到該商品的網頁連結</li>
+<li>爬取該連結內的商品資料</li>
+</ol>
+
+<p>步驟如下註解：</p>
+
+<pre><code>## 模擬一個網頁瀏覽的session
+se &lt;- html_session("http://www.ruten.com.tw/")
+se
+</code></pre>
+
+<p><img src="https://raw.githubusercontent.com/Lofu/R-Crawl-Notebook/master/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-10-05%20%E4%B8%8A%E5%8D%8810.55.33.png" alt=""></p>
+
+<pre><code>## 解析網頁表格部分，但注意這只是將表格部分拿出來填
+fo &lt;- html_form(se)[[1]]
+fo
+</code></pre>
+
+<p><img src="https://raw.githubusercontent.com/Lofu/R-Crawl-Notebook/master/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-10-05%20%E4%B8%8A%E5%8D%8811.02.10.png" alt=""></p>
+
+<p>可以發現<code>&lt;input text&gt; 'k'</code>的部分其實就是官網首頁中，輸入關鍵字的部分。</p>
+
+<pre><code>## 在fo中為'k'的這個位置輸入'耳機'(i.e.意思就是在關鍵字搜尋格輸入耳機)
+fo &lt;- set_values(fo, k = '耳機') 
+fo
+</code></pre>
+
+<p><img src="https://raw.githubusercontent.com/Lofu/R-Crawl-Notebook/master/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-10-05%20%E4%B8%8A%E5%8D%8811.08.00.png" alt=""></p>
+
+<p>可以發現在<code>'k'</code>的部分被填入耳機並存入<code>fo</code>這個物件，下一步就是提交這個form</p>
+
+<pre><code>## 這個function是在rvest的相關網站上找到的，我在文章最後會附上引用到的resource。
+submit_form2 &lt;- function(session, form){
+  library(XML)
+  url &lt;- XML::getRelativeURL(form$url, session$url)
+  url &lt;- paste(url,'?',sep='')
+  values &lt;- as.vector(rvest:::submit_request(form)$values)
+  att &lt;- names(values)
+  if (tail(att, n=1) == "NULL"){
+    values &lt;- values[1:length(values)-1]
+    att &lt;- att[1:length(att)-1]
+  }
+  q &lt;- paste(att,values,sep='=')
+  q &lt;- paste(q, collapse = '&amp;')
+  q &lt;- gsub(" ", "+", q)
+  url &lt;- paste(url, q, sep = '')
+  html_session(url)
+}
+</code></pre>
+
+<pre><code>## 將session與form填入，並提交
+submit_form2(se,fo)
+</code></pre>
+
+<p><img src="https://raw.githubusercontent.com/Lofu/R-Crawl-Notebook/master/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-10-05%20%E4%B8%8A%E5%8D%8811.13.04.png" alt=""></p>
+
+<p>此網址就是關鍵字輸入耳機搜尋到的網頁，接下來就是與前範例一樣進入這網頁解析並爬取資料。</p>
+
+<pre><code>## 讀入網頁html存入buy_page物件
+buy_page &lt;- read_html("http://search.ruten.com.tw/search/s000.php?enc=u&amp;searchfrom=indexbar&amp;k=%E8%80%B3%E6%A9%9F&amp;_plid=57f4624e5dadc")
+
+
+##
+data_buy &lt;- buy_page %&gt;%
+  html_nodes(".item-name-text") %&gt;% #這些css皆可運用SelectWidget來獲得
+  html_text() %&gt;% 
+  data.frame(產品標題 = .)
+
+##
+data_price &lt;- buy_page %&gt;%
+  html_nodes(".rt-text-price") %&gt;%
+  html_text() %&gt;% 
+  data.frame(直購價 = .)
+
+##
+data_qotation &lt;- buy_page %&gt;%
+  html_nodes("tr:nth-child(2) td:nth-child(1) span") %&gt;%
+  html_text()  
+
+##
+data_qotation &lt;- data_qotation %&gt;% 
+  gsub(" {0,}","",.) %&gt;% 
+  gsub("\n","",.) %&gt;% 
+  gsub("最低運費：","",.) %&gt;% 
+  data.frame(最低運費 = .)
+
+##
+data_saler &lt;- buy_page %&gt;% 
+  html_nodes(css = ".vtop a:nth-child(1)") %&gt;% 
+  html_text() %&gt;% 
+  data.frame(賣家_ID = .)
+
+##
+data_buy %&gt;% 
+  bind_cols(data_price) %&gt;% 
+  bind_cols(data_qotation) %&gt;% 
+  bind_cols(data_saler) %&gt;% View
+</code></pre>
+
+<p><img src="https://raw.githubusercontent.com/Lofu/R-Crawl-Notebook/master/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-10-10%20%E4%B8%8B%E5%8D%883.35.56.png" alt=""></p>
+
+<h2>
+<a id="小編心得雜談可略" class="anchor" href="#%E5%B0%8F%E7%B7%A8%E5%BF%83%E5%BE%97%E9%9B%9C%E8%AB%87%E5%8F%AF%E7%95%A5" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>小編心得雜談(可略)</h2>
+
+<p>小弟最近的任務是爬取某一個網路商店中所有產品的產品簡介與內容，目的是為了拿來做時下流行的<strong>文字探勘</strong>，但其實小弟本身背景是一個統計分析的研究者，在爬取資料這一塊沒有任何經驗，所以在誤打誤撞的情況下尋找R相關的爬蟲套件，由於經常使用Hadley大大的套件進行資料清理、萃取與視覺化，所以就嘗試以他的作品<code>rvest</code>來試試，經過一連串爬文才有一些熟悉，然而，我真正的目的是寫出一支程式能夠把整個網路商店所有產品的簡介與內容自動爬下存成<strong>json</strong>檔，過程中必須經過：</p>
+
+<ol>
+<li>前往目標網站熟悉整個網站的每一個部分，包括：每一種類別底下的類別其網址的變化</li>
+<li>目標網頁中是否有分頁(必須做到爬蟲時能夠自動換頁)</li>
+<li>爬取資料儲存格式的設定</li>
+</ol>
+
+<p>以上簡要列出幾點，但若各位大大看過以上的文，可以發現其實在基本的rvest運用上僅有運用<strong>SelectWidget</strong>來得到網頁目標的css，再將爬取下來的資料清理過後存成dataframe，再網上的文章中也鮮少提到其運用在自動化的爬蟲，故之後我便更換了工具來執行這項任務。但我認為，少量迅速的目標網頁資料，是能夠運用本文的方式來迅速地爬取並分析的！</p>
+      </section>
+
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
